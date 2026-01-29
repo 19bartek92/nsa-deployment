@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.38.5.1644",
-      "templateHash": "14929642687382823729"
+      "templateHash": "7395234002470850184"
     }
   },
   "parameters": {
@@ -14,6 +14,13 @@
       "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Azure region for all resources"
+      }
+    },
+    "sharedResourceGroupName": {
+      "type": "string",
+      "defaultValue": "rg-eureka-crawler",
+      "metadata": {
+        "description": "Name of the Resource Group containing shared infrastructure (Eureka deployment)"
       }
     },
     "environmentName": {
@@ -100,16 +107,6 @@
   },
   "resources": [
     {
-      "type": "Microsoft.DocumentDB/databaseAccounts/mongodbDatabases",
-      "apiVersion": "2023-11-15",
-      "name": "[format('{0}/{1}', parameters('cosmosAccountName'), 'nsa')]",
-      "properties": {
-        "resource": {
-          "id": "nsa"
-        }
-      }
-    },
-    {
       "type": "Microsoft.App/jobs",
       "apiVersion": "2023-05-01",
       "name": "[parameters('jobBackfillName')]",
@@ -117,11 +114,11 @@
       "identity": {
         "type": "UserAssigned",
         "userAssignedIdentities": {
-          "[format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('uamiName')))]": {}
+          "[format('{0}', extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('sharedResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('uamiName')))]": {}
         }
       },
       "properties": {
-        "environmentId": "[resourceId('Microsoft.App/managedEnvironments', parameters('environmentName'))]",
+        "environmentId": "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('sharedResourceGroupName')), 'Microsoft.App/managedEnvironments', parameters('environmentName'))]",
         "configuration": {
           "triggerType": "Manual",
           "replicaTimeout": 86400,
@@ -133,33 +130,33 @@
           "secrets": [
             {
               "name": "cosmos-connection-string",
-              "keyVaultUrl": "[format('{0}secrets/cosmos-connection-string', reference(resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName')), '2023-07-01').vaultUri)]",
-              "identity": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('uamiName'))]"
+              "keyVaultUrl": "[format('{0}secrets/cosmos-connection-string', reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('sharedResourceGroupName')), 'Microsoft.KeyVault/vaults', parameters('keyVaultName')), '2023-07-01').vaultUri)]",
+              "identity": "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('sharedResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('uamiName'))]"
             },
             {
               "name": "sharepoint-tenant-id",
-              "keyVaultUrl": "[format('{0}secrets/sharepoint-tenant-id', reference(resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName')), '2023-07-01').vaultUri)]",
-              "identity": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('uamiName'))]"
+              "keyVaultUrl": "[format('{0}secrets/sharepoint-tenant-id', reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('sharedResourceGroupName')), 'Microsoft.KeyVault/vaults', parameters('keyVaultName')), '2023-07-01').vaultUri)]",
+              "identity": "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('sharedResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('uamiName'))]"
             },
             {
               "name": "sharepoint-client-id",
-              "keyVaultUrl": "[format('{0}secrets/sharepoint-client-id', reference(resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName')), '2023-07-01').vaultUri)]",
-              "identity": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('uamiName'))]"
+              "keyVaultUrl": "[format('{0}secrets/sharepoint-client-id', reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('sharedResourceGroupName')), 'Microsoft.KeyVault/vaults', parameters('keyVaultName')), '2023-07-01').vaultUri)]",
+              "identity": "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('sharedResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('uamiName'))]"
             },
             {
               "name": "sharepoint-client-secret",
-              "keyVaultUrl": "[format('{0}secrets/sharepoint-client-secret', reference(resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName')), '2023-07-01').vaultUri)]",
-              "identity": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('uamiName'))]"
+              "keyVaultUrl": "[format('{0}secrets/sharepoint-client-secret', reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('sharedResourceGroupName')), 'Microsoft.KeyVault/vaults', parameters('keyVaultName')), '2023-07-01').vaultUri)]",
+              "identity": "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('sharedResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('uamiName'))]"
             },
             {
               "name": "sharepoint-site-id",
-              "keyVaultUrl": "[format('{0}secrets/sharepoint-site-id', reference(resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName')), '2023-07-01').vaultUri)]",
-              "identity": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('uamiName'))]"
+              "keyVaultUrl": "[format('{0}secrets/sharepoint-site-id', reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('sharedResourceGroupName')), 'Microsoft.KeyVault/vaults', parameters('keyVaultName')), '2023-07-01').vaultUri)]",
+              "identity": "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('sharedResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('uamiName'))]"
             },
             {
               "name": "sharepoint-drive-id",
-              "keyVaultUrl": "[format('{0}secrets/sharepoint-drive-id', reference(resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName')), '2023-07-01').vaultUri)]",
-              "identity": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('uamiName'))]"
+              "keyVaultUrl": "[format('{0}secrets/sharepoint-drive-id', reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('sharedResourceGroupName')), 'Microsoft.KeyVault/vaults', parameters('keyVaultName')), '2023-07-01').vaultUri)]",
+              "identity": "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('sharedResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('uamiName'))]"
             }
           ]
         },
@@ -303,7 +300,7 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.DocumentDB/databaseAccounts/mongodbDatabases', parameters('cosmosAccountName'), 'nsa')]"
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('sharedResourceGroupName')), 'Microsoft.Resources/deployments', 'nsa-cosmos-database')]"
       ]
     },
     {
@@ -314,11 +311,11 @@
       "identity": {
         "type": "UserAssigned",
         "userAssignedIdentities": {
-          "[format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('uamiName')))]": {}
+          "[format('{0}', extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('sharedResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('uamiName')))]": {}
         }
       },
       "properties": {
-        "environmentId": "[resourceId('Microsoft.App/managedEnvironments', parameters('environmentName'))]",
+        "environmentId": "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('sharedResourceGroupName')), 'Microsoft.App/managedEnvironments', parameters('environmentName'))]",
         "configuration": {
           "triggerType": "Schedule",
           "replicaTimeout": 3600,
@@ -331,33 +328,33 @@
           "secrets": [
             {
               "name": "cosmos-connection-string",
-              "keyVaultUrl": "[format('{0}secrets/cosmos-connection-string', reference(resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName')), '2023-07-01').vaultUri)]",
-              "identity": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('uamiName'))]"
+              "keyVaultUrl": "[format('{0}secrets/cosmos-connection-string', reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('sharedResourceGroupName')), 'Microsoft.KeyVault/vaults', parameters('keyVaultName')), '2023-07-01').vaultUri)]",
+              "identity": "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('sharedResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('uamiName'))]"
             },
             {
               "name": "sharepoint-tenant-id",
-              "keyVaultUrl": "[format('{0}secrets/sharepoint-tenant-id', reference(resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName')), '2023-07-01').vaultUri)]",
-              "identity": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('uamiName'))]"
+              "keyVaultUrl": "[format('{0}secrets/sharepoint-tenant-id', reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('sharedResourceGroupName')), 'Microsoft.KeyVault/vaults', parameters('keyVaultName')), '2023-07-01').vaultUri)]",
+              "identity": "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('sharedResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('uamiName'))]"
             },
             {
               "name": "sharepoint-client-id",
-              "keyVaultUrl": "[format('{0}secrets/sharepoint-client-id', reference(resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName')), '2023-07-01').vaultUri)]",
-              "identity": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('uamiName'))]"
+              "keyVaultUrl": "[format('{0}secrets/sharepoint-client-id', reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('sharedResourceGroupName')), 'Microsoft.KeyVault/vaults', parameters('keyVaultName')), '2023-07-01').vaultUri)]",
+              "identity": "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('sharedResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('uamiName'))]"
             },
             {
               "name": "sharepoint-client-secret",
-              "keyVaultUrl": "[format('{0}secrets/sharepoint-client-secret', reference(resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName')), '2023-07-01').vaultUri)]",
-              "identity": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('uamiName'))]"
+              "keyVaultUrl": "[format('{0}secrets/sharepoint-client-secret', reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('sharedResourceGroupName')), 'Microsoft.KeyVault/vaults', parameters('keyVaultName')), '2023-07-01').vaultUri)]",
+              "identity": "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('sharedResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('uamiName'))]"
             },
             {
               "name": "sharepoint-site-id",
-              "keyVaultUrl": "[format('{0}secrets/sharepoint-site-id', reference(resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName')), '2023-07-01').vaultUri)]",
-              "identity": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('uamiName'))]"
+              "keyVaultUrl": "[format('{0}secrets/sharepoint-site-id', reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('sharedResourceGroupName')), 'Microsoft.KeyVault/vaults', parameters('keyVaultName')), '2023-07-01').vaultUri)]",
+              "identity": "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('sharedResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('uamiName'))]"
             },
             {
               "name": "sharepoint-drive-id",
-              "keyVaultUrl": "[format('{0}secrets/sharepoint-drive-id', reference(resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName')), '2023-07-01').vaultUri)]",
-              "identity": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('uamiName'))]"
+              "keyVaultUrl": "[format('{0}secrets/sharepoint-drive-id', reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('sharedResourceGroupName')), 'Microsoft.KeyVault/vaults', parameters('keyVaultName')), '2023-07-01').vaultUri)]",
+              "identity": "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('sharedResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('uamiName'))]"
             }
           ]
         },
@@ -501,8 +498,71 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.DocumentDB/databaseAccounts/mongodbDatabases', parameters('cosmosAccountName'), 'nsa')]"
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('sharedResourceGroupName')), 'Microsoft.Resources/deployments', 'nsa-cosmos-database')]"
       ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "nsa-cosmos-database",
+      "resourceGroup": "[parameters('sharedResourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "cosmosAccountName": {
+            "value": "[parameters('cosmosAccountName')]"
+          },
+          "databaseName": {
+            "value": "nsa"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.38.5.1644",
+              "templateHash": "9314703748961922164"
+            }
+          },
+          "parameters": {
+            "cosmosAccountName": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the existing Cosmos DB account"
+              }
+            },
+            "databaseName": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the database to create"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.DocumentDB/databaseAccounts/mongodbDatabases",
+              "apiVersion": "2023-11-15",
+              "name": "[format('{0}/{1}', parameters('cosmosAccountName'), parameters('databaseName'))]",
+              "properties": {
+                "resource": {
+                  "id": "[parameters('databaseName')]"
+                }
+              }
+            }
+          ],
+          "outputs": {
+            "databaseName": {
+              "type": "string",
+              "value": "[parameters('databaseName')]"
+            }
+          }
+        }
+      }
     }
   ],
   "outputs": {
@@ -514,21 +574,29 @@
       "type": "string",
       "value": "[parameters('jobDeltaName')]"
     },
-    "cosmosDatabaseName": {
+    "sharedResourceGroup": {
       "type": "string",
-      "value": "nsa"
+      "value": "[parameters('sharedResourceGroupName')]"
+    },
+    "nsaResourceGroup": {
+      "type": "string",
+      "value": "[resourceGroup().name]"
     },
     "fullImageUrl": {
       "type": "string",
-      "value": "[format('{0}/{1}:{2}', reference(resourceId('Microsoft.ContainerRegistry/registries', parameters('acrName')), '2023-07-01').loginServer, parameters('imageName'), parameters('imageTag'))]"
+      "value": "[format('{0}/{1}:{2}', reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('sharedResourceGroupName')), 'Microsoft.ContainerRegistry/registries', parameters('acrName')), '2023-07-01').loginServer, parameters('imageName'), parameters('imageTag'))]"
     },
     "updateJobBackfillCommand": {
       "type": "string",
-      "value": "[format('az containerapp job update -n {0} -g {1} --image {2}/{3}:{4} --registry-server {5} --registry-identity {6}', parameters('jobBackfillName'), resourceGroup().name, reference(resourceId('Microsoft.ContainerRegistry/registries', parameters('acrName')), '2023-07-01').loginServer, parameters('imageName'), parameters('imageTag'), reference(resourceId('Microsoft.ContainerRegistry/registries', parameters('acrName')), '2023-07-01').loginServer, resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('uamiName')))]"
+      "value": "[format('az containerapp job update -n {0} -g {1} --image {2}/{3}:{4} --registry-server {5} --registry-identity {6}', parameters('jobBackfillName'), resourceGroup().name, reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('sharedResourceGroupName')), 'Microsoft.ContainerRegistry/registries', parameters('acrName')), '2023-07-01').loginServer, parameters('imageName'), parameters('imageTag'), reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('sharedResourceGroupName')), 'Microsoft.ContainerRegistry/registries', parameters('acrName')), '2023-07-01').loginServer, extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('sharedResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('uamiName')))]"
     },
     "updateJobDeltaCommand": {
       "type": "string",
-      "value": "[format('az containerapp job update -n {0} -g {1} --image {2}/{3}:{4} --registry-server {5} --registry-identity {6}', parameters('jobDeltaName'), resourceGroup().name, reference(resourceId('Microsoft.ContainerRegistry/registries', parameters('acrName')), '2023-07-01').loginServer, parameters('imageName'), parameters('imageTag'), reference(resourceId('Microsoft.ContainerRegistry/registries', parameters('acrName')), '2023-07-01').loginServer, resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('uamiName')))]"
+      "value": "[format('az containerapp job update -n {0} -g {1} --image {2}/{3}:{4} --registry-server {5} --registry-identity {6}', parameters('jobDeltaName'), resourceGroup().name, reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('sharedResourceGroupName')), 'Microsoft.ContainerRegistry/registries', parameters('acrName')), '2023-07-01').loginServer, parameters('imageName'), parameters('imageTag'), reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('sharedResourceGroupName')), 'Microsoft.ContainerRegistry/registries', parameters('acrName')), '2023-07-01').loginServer, extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('sharedResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('uamiName')))]"
+    },
+    "deleteNsaCommand": {
+      "type": "string",
+      "value": "[format('az group delete --name {0} --yes  # Safe: only deletes NSA jobs, not shared infrastructure', resourceGroup().name)]"
     }
   }
 }

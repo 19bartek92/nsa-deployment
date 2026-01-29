@@ -1,6 +1,6 @@
 # NSA.Crawler - Wdrożenie w Azure
 
-**Rozszerzenie istniejącej infrastruktury Eureka** o joby NSA.Crawler - systemu pobierania orzeczeń z orzeczenia.nsa.gov.pl.
+**Izolowane wdrożenie NSA.Crawler** z wykorzystaniem współdzielonej infrastruktury Eureka.
 
 > **Uwaga:** To repozytorium zawiera **tylko pliki deployment**. Kod aplikacji jest utrzymywany osobno.
 
@@ -8,45 +8,86 @@
 
 ---
 
+## Architektura dwóch Resource Groups
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  rg-eureka-crawler (SHARED - już istnieje)                      │
+│                                                                 │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
+│  │ Environment  │  │    UAMI      │  │  Key Vault   │          │
+│  │ (Container   │  │ (Managed     │  │ (SharePoint  │          │
+│  │  Apps)       │  │  Identity)   │  │  secrets)    │          │
+│  └──────────────┘  └──────────────┘  └──────────────┘          │
+│                                                                 │
+│  ┌──────────────┐  ┌──────────────┐                            │
+│  │     ACR      │  │  Cosmos DB   │                            │
+│  │ (Container   │  │  Account     │                            │
+│  │  Registry)   │  │  ├─ eureka   │                            │
+│  │  ├─ eureka   │  │  └─ nsa ←NEW │                            │
+│  │  └─ nsa ←NEW │  └──────────────┘                            │
+│  └──────────────┘                                              │
+│                                                                 │
+│  ┌──────────────┐  ┌──────────────┐                            │
+│  │ eureka-      │  │ eureka-      │  ← Eureka jobs             │
+│  │ backfill     │  │ delta        │    (już istnieją)          │
+│  └──────────────┘  └──────────────┘                            │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│  rg-nsa-crawler (ISOLATED - ten deployment)                     │
+│                                                                 │
+│  ┌──────────────┐  ┌──────────────┐                            │
+│  │ nsa-         │  │ nsa-         │  ← NSA jobs                │
+│  │ backfill     │  │ delta        │    (NOWE)                  │
+│  └──────────────┘  └──────────────┘                            │
+│                                                                 │
+│  🔗 References shared infrastructure from rg-eureka-crawler    │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Korzyści izolacji
+
+| Aspekt | Opis |
+|--------|------|
+| **Bezpieczne testowanie** | Możesz usunąć `rg-nsa-crawler` bez wpływu na Eurekę |
+| **Łatwy rollback** | `az group delete -n rg-nsa-crawler --yes` |
+| **Jasne koszty** | Azure Cost Management per RG |
+| **Niezależny lifecycle** | NSA może być wdrażane/usuwane niezależnie |
+| **Minimalne ryzyko** | Błąd w NSA deployment nie uszkodzi Eureki |
+
+---
+
 ## Wymagania wstępne
 
 **WAŻNE:** Ten deployment wymaga wcześniejszego wdrożenia Eureka.Crawler!
-
-NSA.Crawler wykorzystuje istniejącą infrastrukturę Eureka:
-- ✅ Ten sam Azure Container Registry (ACR)
-- ✅ Ten sam Azure Key Vault (te same sekrety SharePoint)
-- ✅ Ten sam Azure Cosmos DB account (inna baza danych: `nsa`)
-- ✅ Ten sam Container Apps Environment
-- ✅ Ta sama User-Assigned Managed Identity (UAMI)
 
 ### Przed deployment
 
 1. **Eureka deployment musi być ukończony** - [eureka-deployment](https://github.com/19bartek92/eureka-deployment)
 2. **Zbierz outputy z Eureka deployment:**
-   - Resource Group name (np. `rg-eureka-crawler`)
-   - Environment name (np. `env-eureka-crawler`)
-   - UAMI name (np. `uami-eureka-crawler`)
-   - Key Vault name (np. `kv-eureka-abc123`)
-   - ACR name (np. `acreurekaxxxx`)
-   - Cosmos DB account name (np. `cosmos-eureka-xxxx`)
+
+| Parametr | Gdzie znaleźć | Przykład |
+|----------|---------------|----------|
+| Shared Resource Group | Portal → Resource Groups | `rg-eureka-crawler` |
+| Environment name | Portal → Container Apps Environments | `env-eureka-crawler` |
+| UAMI name | Portal → Managed Identities | `uami-eureka-crawler` |
+| Key Vault name | Portal → Key Vaults | `kv-eureka-abc123` |
+| ACR name | Portal → Container Registries | `acreurekaxxxx` |
+| Cosmos DB account | Portal → Azure Cosmos DB | `cosmos-eureka-xxxx` |
 
 ---
 
 ## Co zostanie wdrożone?
 
-Kliknij przycisk "Deploy to Azure" powyżej aby utworzyć:
+**W nowej RG (`rg-nsa-crawler`):**
+- ✅ `nsa-backfill` - Container Apps Job (ręczne, 24h timeout)
+- ✅ `nsa-delta` - Container Apps Job (CRON 5:10 UTC, 1h timeout)
 
-- ✅ **Cosmos DB Database** - baza `nsa` w istniejącym Cosmos account
-- ✅ **2 Container Apps Jobs** (w istniejącym environment):
-  - `nsa-backfill` - ręczne uruchamianie (pełna synchronizacja, 24h timeout)
-  - `nsa-delta` - codzienne aktualizacje o 5:10 UTC (1h timeout)
-
-**Co NIE jest tworzone** (używa istniejących zasobów Eureka):
-- Resource Group
-- Container Apps Environment
-- User-Assigned Managed Identity
-- Key Vault
-- ACR
+**W shared RG (`rg-eureka-crawler`):**
+- ✅ Cosmos DB database `nsa` (w istniejącym account)
 
 **Czas wdrożenia:** ~3-5 minut
 
@@ -54,138 +95,111 @@ Kliknij przycisk "Deploy to Azure" powyżej aby utworzyć:
 
 ## Parametry deployment
 
-| Parametr | Opis | Przykład | Źródło |
-|----------|------|----------|--------|
-| **Resource Group** | Istniejąca RG z Eureka | `rg-eureka-crawler` | Eureka output |
-| **Location** | Region Azure | `West Europe` | - |
-| **Environment Name** | Istniejące Container Apps Environment | `env-eureka-crawler` | Eureka output |
-| **UAMI Name** | Istniejące Managed Identity | `uami-eureka-crawler` | Eureka output |
-| **Key Vault Name** | Istniejący Key Vault | `kv-eureka-abc123` | Eureka output |
-| **ACR Name** | Istniejący Container Registry | `acreurekaxxxx` | Eureka output |
-| **Cosmos Account Name** | Istniejący Cosmos DB account | `cosmos-eureka-xxxx` | Eureka output |
-| **Image Name** | Nazwa obrazu Docker NSA | `nsa-crawler` | Default |
-| **Image Tag** | Tag obrazu | `latest` | Default |
+| Parametr | Opis | Default |
+|----------|------|---------|
+| **Resource Group** | **NOWA** RG dla NSA | `rg-nsa-crawler` |
+| **Location** | Region Azure | `West Europe` |
+| **Shared Resource Group** | Istniejąca RG z Eureka | `rg-eureka-crawler` |
+| **Environment Name** | Istniejące Environment | `env-eureka-crawler` |
+| **UAMI Name** | Istniejące Managed Identity | `uami-eureka-crawler` |
+| **Key Vault Name** | Istniejący Key Vault | _(wymagane)_ |
+| **ACR Name** | Istniejący Container Registry | _(wymagane)_ |
+| **Cosmos Account Name** | Istniejący Cosmos DB | _(wymagane)_ |
 
 ---
 
-## Architektura
+## Deployment krok po kroku
+
+### 1. Utwórz nową Resource Group dla NSA
+
+```bash
+az group create --name rg-nsa-crawler --location westeurope
+```
+
+### 2. Deploy (przycisk lub CLI)
+
+**Opcja A: Przycisk "Deploy to Azure"** (góra README)
+
+**Opcja B: Azure CLI**
+```bash
+az deployment group create \
+  --resource-group rg-nsa-crawler \
+  --template-file bicep/main.bicep \
+  --parameters \
+    sharedResourceGroupName="rg-eureka-crawler" \
+    keyVaultName="kv-eureka-XXXXX" \
+    acrName="acreurekaXXXXX" \
+    cosmosAccountName="cosmos-eureka-XXXXX"
+```
+
+### 3. Po deployment - przekaż developerowi outputy
 
 ```
-┌────────────────────────────────────────────────────────────────────┐
-│              Azure Container Apps Environment                       │
-│              (env-eureka-crawler - ISTNIEJĄCE)                     │
-│                                                                     │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐     │
-│  │ Eureka Backfill │  │ Eureka Delta    │  │ NSA Backfill    │     │
-│  │ (istniejący)    │  │ (istniejący)    │  │ (NOWY)          │     │
-│  └────────┬────────┘  └────────┬────────┘  └────────┬────────┘     │
-│           │                    │                    │               │
-│  ┌────────┴────────────────────┴────────────────────┴────────┐     │
-│  │                                                           │     │
-│  │  ┌─────────────────┐                                      │     │
-│  │  │ NSA Delta       │                                      │     │
-│  │  │ (NOWY)          │                                      │     │
-│  │  │ CRON: 5:10 UTC  │                                      │     │
-│  │  └────────┬────────┘                                      │     │
-│  │           │                                               │     │
-│  │           └──────────────┬────────────────────────────────┘     │
-│  │                          │                                      │
-│  │                  ┌───────▼─────────┐                            │
-│  │                  │ UAMI (Identity) │  ← ISTNIEJĄCE              │
-│  │                  │ - Key Vault     │                            │
-│  │                  │ - Cosmos DB     │                            │
-│  │                  │ - ACR Pull      │                            │
-│  │                  └───────┬─────────┘                            │
-│  └──────────────────────────┼──────────────────────────────────────┘
-└─────────────────────────────┼──────────────────────────────────────┘
-                              │
-           ┌──────────────────┼─────────────────┐
-           │                  │                 │
-     ┌─────▼─────┐    ┌───────▼───────┐        │
-     │   ACR     │    │  Key Vault    │        │
-     │ (ISTN.)   │    │  (ISTNIEJĄCY) │        │
-     │           │    │  ┌──────────┐ │        │
-     │  Images:  │    │  │cosmos    │ │        │
-     │  eureka   │    │  │sp-*      │ │        │
-     │  nsa ←NEW │    │  └──────────┘ │        │
-     └───────────┘    └───────────────┘        │
-                                               │
-           ┌───────────────────────────────────┘
-           │
-     ┌─────▼─────┐     ┌────────┐     ┌──────────┐
-     │Cosmos DB  │     │SharePnt│     │ NSA API  │
-     │(ISTNIEJĄCY)│    │(Graph) │     │(Public)  │
-     │           │     │        │     │          │
-     │ eureka DB │     │Eureka_ │     │orzeczenia│
-     │ nsa DB ←  │     │docs    │     │.nsa.gov  │
-     │    NEW    │     │NSA_docs│     │.pl       │
-     └───────────┘     │ ← NEW  │     └──────────┘
-                       └────────┘
+NSA Backfill Job: nsa-backfill
+NSA Delta Job: nsa-delta
+NSA Resource Group: rg-nsa-crawler
+Full Image URL: acreureka.azurecr.io/nsa-crawler:latest
+```
+
+---
+
+## Operacje po wdrożeniu
+
+### Aktualizacja image (developer)
+
+```bash
+# 1. Build i push
+docker build -t acreureka.azurecr.io/nsa-crawler:v1.0.0 .
+docker push acreureka.azurecr.io/nsa-crawler:v1.0.0
+
+# 2. Update jobs
+az containerapp job update -n nsa-backfill -g rg-nsa-crawler \
+  --image acreureka.azurecr.io/nsa-crawler:v1.0.0
+
+az containerapp job update -n nsa-delta -g rg-nsa-crawler \
+  --image acreureka.azurecr.io/nsa-crawler:v1.0.0
+```
+
+### Usunięcie NSA (bezpieczne!)
+
+```bash
+# Usuwa TYLKO NSA joby, NIE dotyka Eureki
+az group delete --name rg-nsa-crawler --yes
+
+# Opcjonalnie: usuń też NSA database z Cosmos
+az cosmosdb mongodb database delete \
+  --account-name cosmos-eureka-XXXXX \
+  --name nsa \
+  --resource-group rg-eureka-crawler
+```
+
+### Rollback do poprzedniej wersji
+
+```bash
+az containerapp job update -n nsa-backfill -g rg-nsa-crawler \
+  --image acreureka.azurecr.io/nsa-crawler:v0.9.0
 ```
 
 ---
 
 ## SharePoint - separacja danych
 
-NSA.Crawler używa **tego samego SharePoint Site i Drive** co Eureka, ale zapisuje pliki w **osobnym folderze**:
+NSA używa **tego samego SharePoint** co Eureka, ale zapisuje w **osobnym folderze**:
 
 | Crawler | BaseFolder | Przykładowa ścieżka |
 |---------|------------|---------------------|
 | Eureka | `Eureka_docs` | `/Eureka_docs/202601/dokument.docx` |
 | NSA | `NSA_docs` | `/NSA_docs/202601/I_OSK_123_21.docx` |
 
-Ta separacja jest konfigurowana w aplikacji (nie w deployment), więc sekrety SharePoint są **identyczne** dla obu crawlerów.
-
----
-
-## Po wdrożeniu
-
-✅ **Deployment zakończony!**
-
-> **UWAGA:** Joby zostały utworzone z **placeholder image**. Developer musi zaktualizować image po zpushowaniu do ACR.
-
-**Outputy deployment:**
-
-```
-NSA Backfill Job: nsa-backfill
-NSA Delta Job: nsa-delta
-Full Image URL: acreureka.azurecr.io/nsa-crawler:latest
-Update NSA Backfill: az containerapp job update -n nsa-backfill -g rg-eureka-crawler --image acreureka.azurecr.io/nsa-crawler:latest --registry-server acreureka.azurecr.io --registry-identity <uami-id>
-Update NSA Delta: az containerapp job update -n nsa-delta -g rg-eureka-crawler --image acreureka.azurecr.io/nsa-crawler:latest --registry-server acreureka.azurecr.io --registry-identity <uami-id>
-```
-
-**Przekaż te wartości developerowi.**
-
 ---
 
 ## Koszty (przyrostowe)
 
-NSA.Crawler dodaje minimalne koszty do istniejącej infrastruktury Eureka:
-
-| Serwis | Koszt przyrostowy/miesiąc |
-|--------|---------------------------|
-| Container Apps Jobs (2 dodatkowe) | ~$5-10 |
-| Cosmos DB (dodatkowa baza `nsa`) | ~$5-15* |
+| Serwis | Koszt/miesiąc |
+|--------|---------------|
+| Container Apps Jobs (NSA) | ~$5-10 |
+| Cosmos DB (database `nsa`) | ~$5-15 |
 | **Total przyrost** | **~$10-25** |
-
-*Zależnie od volumenu danych
-
-**Pełna infrastruktura (Eureka + NSA):** ~$90-130/miesiąc
-
----
-
-## Różnice między Eureka a NSA
-
-| Aspekt | Eureka.Crawler | NSA.Crawler |
-|--------|----------------|-------------|
-| Źródło danych | eureka.mf.gov.pl | orzeczenia.nsa.gov.pl |
-| Typ dokumentów | Interpretacje podatkowe | Orzeczenia sądowe |
-| Format źródłowy | HTML/plain text | RTF |
-| Konwersja | Bezpośrednia | RTF → DOCX (LibreOffice) |
-| Cosmos Database | `eureka` | `nsa` |
-| SharePoint folder | `Eureka_docs` | `NSA_docs` |
-| Delta CRON | 4:10 UTC | 5:10 UTC |
-| Timeout backfill | 24h | 24h |
 
 ---
 
@@ -193,12 +207,9 @@ NSA.Crawler dodaje minimalne koszty do istniejącej infrastruktury Eureka:
 
 **Copyright © 2025. Wszelkie prawa zastrzeżone.**
 
-Ta konfiguracja deployment jest dostarczona "jak jest" wyłącznie do celów referencyjnych i wdrożeniowych.
-Kod źródłowy aplikacji jest licencjonowany osobno i nie jest zawarty w tym repozytorium.
-
 ---
 
 **Ostatnia aktualizacja:** 2025-01-29
 **Kompatybilne z:** NSA.Crawler v1.x
-**Wymaga:** Eureka.Crawler deployment
+**Wymaga:** Eureka.Crawler deployment (rg-eureka-crawler)
 **Utrzymywane przez:** bartoszpalmi@hotmail.com

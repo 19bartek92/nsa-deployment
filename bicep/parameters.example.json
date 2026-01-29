@@ -5,6 +5,9 @@
     "location": {
       "value": "westeurope"
     },
+    "sharedResourceGroupName": {
+      "value": "rg-eureka-crawler"
+    },
     "environmentName": {
       "value": "env-eureka-crawler"
     },
@@ -15,7 +18,7 @@
       "value": "kv-eureka-XXXXX"
     },
     "acrName": {
-      "value": "acreurekXXXXX"
+      "value": "acreurekaXXXXX"
     },
     "cosmosAccountName": {
       "value": "cosmos-eureka-XXXXX"

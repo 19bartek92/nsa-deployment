@@ -1,6 +1,13 @@
 @description('Azure region for all resources')
 param location string = resourceGroup().location
 
+// ============================================================================
+// SHARED INFRASTRUCTURE REFERENCES (from Eureka RG)
+// ============================================================================
+
+@description('Name of the Resource Group containing shared infrastructure (Eureka deployment)')
+param sharedResourceGroupName string = 'rg-eureka-crawler'
+
 @description('Name of the existing Container Apps Environment (from Eureka deployment)')
 param environmentName string = 'env-eureka-crawler'
 
@@ -15,6 +22,10 @@ param acrName string
 
 @description('Name of the existing Cosmos DB account (from Eureka deployment)')
 param cosmosAccountName string
+
+// ============================================================================
+// NSA-SPECIFIC PARAMETERS
+// ============================================================================
 
 @description('Name of the NSA backfill job')
 param jobBackfillName string = 'nsa-backfill'
@@ -37,35 +48,49 @@ param memory string = '2Gi'
 @description('CRON expression for delta job schedule (UTC timezone)')
 param cronExpression string = '10 5 * * *'
 
-// Reference existing resources from Eureka deployment
+// ============================================================================
+// CROSS-RG RESOURCE REFERENCES
+// ============================================================================
+
+// Reference existing resources from shared (Eureka) Resource Group
 resource uami 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' existing = {
   name: uamiName
+  scope: resourceGroup(sharedResourceGroupName)
 }
 
 resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
   name: keyVaultName
+  scope: resourceGroup(sharedResourceGroupName)
 }
 
 resource containerRegistry 'Microsoft.ContainerRegistry/registries@2023-07-01' existing = {
   name: acrName
+  scope: resourceGroup(sharedResourceGroupName)
 }
 
 resource environment 'Microsoft.App/managedEnvironments@2023-05-01' existing = {
   name: environmentName
+  scope: resourceGroup(sharedResourceGroupName)
 }
 
 resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2023-11-15' existing = {
   name: cosmosAccountName
+  scope: resourceGroup(sharedResourceGroupName)
 }
 
-// Create NSA Cosmos DB Database in existing account
-resource cosmosDatabase 'Microsoft.DocumentDB/databaseAccounts/mongodbDatabases@2023-11-15' = {
-  parent: cosmosAccount
-  name: 'nsa'
-  properties: {
-    resource: {
-      id: 'nsa'
-    }
+// ============================================================================
+// NSA-SPECIFIC RESOURCES (in this RG)
+// ============================================================================
+
+// Create NSA Cosmos DB Database in shared Cosmos account
+// Note: Database is a child resource, must be in same RG as parent account
+// We use a module to deploy it to the shared RG
+module cosmosDatabase 'modules/cosmos-database.bicep' = {
+  name: 'nsa-cosmos-database'
+  scope: resourceGroup(sharedResourceGroupName)
+  params: {
+    cosmosAccountName: cosmosAccountName
+    databaseName: 'nsa'
   }
 }
 
@@ -288,10 +313,15 @@ resource jobDelta 'Microsoft.App/jobs@2023-05-01' = {
   ]
 }
 
-// Outputs
+// ============================================================================
+// OUTPUTS
+// ============================================================================
+
 output jobBackfillName string = jobBackfill.name
 output jobDeltaName string = jobDelta.name
-output cosmosDatabaseName string = cosmosDatabase.name
+output sharedResourceGroup string = sharedResourceGroupName
+output nsaResourceGroup string = resourceGroup().name
 output fullImageUrl string = '${containerRegistry.properties.loginServer}/${imageName}:${imageTag}'
 output updateJobBackfillCommand string = 'az containerapp job update -n ${jobBackfillName} -g ${resourceGroup().name} --image ${containerRegistry.properties.loginServer}/${imageName}:${imageTag} --registry-server ${containerRegistry.properties.loginServer} --registry-identity ${uami.id}'
 output updateJobDeltaCommand string = 'az containerapp job update -n ${jobDeltaName} -g ${resourceGroup().name} --image ${containerRegistry.properties.loginServer}/${imageName}:${imageTag} --registry-server ${containerRegistry.properties.loginServer} --registry-identity ${uami.id}'
+output deleteNsaCommand string = 'az group delete --name ${resourceGroup().name} --yes  # Safe: only deletes NSA jobs, not shared infrastructure'
