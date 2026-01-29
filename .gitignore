@@ -1,0 +1,16 @@
+# macOS
+.DS_Store
+*.swp
+
+# IDE
+.idea/
+.vscode/
+*.suo
+*.user
+
+# Bicep build artifacts (keep main.json for Deploy to Azure button)
+*.sarif
+
+# Sensitive files
+*.local.json
+*.secrets.json

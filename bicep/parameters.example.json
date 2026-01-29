@@ -1,0 +1,45 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "value": "westeurope"
+    },
+    "environmentName": {
+      "value": "env-eureka-crawler"
+    },
+    "uamiName": {
+      "value": "uami-eureka-crawler"
+    },
+    "keyVaultName": {
+      "value": "kv-eureka-XXXXX"
+    },
+    "acrName": {
+      "value": "acreurekXXXXX"
+    },
+    "cosmosAccountName": {
+      "value": "cosmos-eureka-XXXXX"
+    },
+    "jobBackfillName": {
+      "value": "nsa-backfill"
+    },
+    "jobDeltaName": {
+      "value": "nsa-delta"
+    },
+    "imageName": {
+      "value": "nsa-crawler"
+    },
+    "imageTag": {
+      "value": "latest"
+    },
+    "cpu": {
+      "value": "1.0"
+    },
+    "memory": {
+      "value": "2Gi"
+    },
+    "cronExpression": {
+      "value": "10 5 * * *"
+    }
+  }
+}
