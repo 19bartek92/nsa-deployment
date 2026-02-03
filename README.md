@@ -48,7 +48,7 @@
 
 ---
 
-## Korzyści izolacji
+<!-- ## Korzyści izolacji
 
 | Aspekt | Opis |
 |--------|------|
@@ -58,7 +58,7 @@
 | **Niezależny lifecycle** | NSA może być wdrażane/usuwane niezależnie |
 | **Minimalne ryzyko** | Błąd w NSA deployment nie uszkodzi Eureki |
 
----
+--- -->
 
 ## Wymagania wstępne
 
@@ -71,22 +71,22 @@
 
 | Parametr | Gdzie znaleźć | Przykład |
 |----------|---------------|----------|
-| Shared Resource Group | Portal → Resource Groups | `rg-eureka-crawler` |
-| Environment name | Portal → Container Apps Environments | `env-eureka-crawler` |
+| Shared Resource Group | Portal → Resource Groups | `RG-ALTO-Eureka-Crawler` |
+| Environment name | Portal → Container Apps Environments | `env-eureka-crawler-proxy` |
 | UAMI name | Portal → Managed Identities | `uami-eureka-crawler` |
-| Key Vault name | Portal → Key Vaults | `kv-eureka-abc123` |
-| ACR name | Portal → Container Registries | `acreurekaxxxx` |
-| Cosmos DB account | Portal → Azure Cosmos DB | `cosmos-eureka-xxxx` |
+| Key Vault name | Portal → Key Vaults | `kv-eureka-wweroxz7udkua` |
+| ACR name | Portal → Container Registries | `acrwweroxz7udkua` |
+| Cosmos DB account | Portal → Azure Cosmos DB | `cosmos-eureka-wweroxz7udkua` |
 
 ---
 
 ## Co zostanie wdrożone?
 
-**W nowej RG (`rg-nsa-crawler`):**
-- ✅ `nsa-backfill` - Container Apps Job (ręczne, 24h timeout)
-- ✅ `nsa-delta` - Container Apps Job (CRON 5:10 UTC, 1h timeout)
+**W nowej RG (`RG-ALTO-Eureka-Crawler`):**
+- ✅ `nsa-backfill` - Container Apps Job 
+- ✅ `nsa-delta` - Container Apps Job 
 
-**W shared RG (`rg-eureka-crawler`):**
+**W shared RG (`RG-ALTO-Eureka-Crawler`):**
 - ✅ Cosmos DB database `nsa` (w istniejącym account)
 
 **Czas wdrożenia:** ~3-5 minut
@@ -97,30 +97,40 @@
 
 | Parametr | Opis | Default |
 |----------|------|---------|
-| **Resource Group** | **NOWA** RG dla NSA | `rg-nsa-crawler` |
-| **Location** | Region Azure | `West Europe` |
-| **Shared Resource Group** | Istniejąca RG z Eureka | `rg-eureka-crawler` |
-| **Environment Name** | Istniejące Environment | `env-eureka-crawler` |
+| **Resource Group** | **NOWA** RG dla NSA | `RG-ALTO-NSA-Crawler` |
+| **Location** | Region Azure | `Poland Central` |
+| **Shared Resource Group** | Istniejąca RG z Eureka | `RG-ALTO-Eureka-Crawler` |
+| **Environment Name** | Istniejące Environment | `eenv-eureka-crawler-proxy` |
 | **UAMI Name** | Istniejące Managed Identity | `uami-eureka-crawler` |
-| **Key Vault Name** | Istniejący Key Vault | _(wymagane)_ |
-| **ACR Name** | Istniejący Container Registry | _(wymagane)_ |
-| **Cosmos Account Name** | Istniejący Cosmos DB | _(wymagane)_ |
+| **Key Vault Name** | Istniejący Key Vault | `kv-eureka-wweroxz7udkua` |
+| **ACR Name** | Istniejący Container Registry | `acrwweroxz7udkua` |
+| **Cosmos Account Name** | Istniejący Cosmos DB | `cosmos-eureka-wweroxz7udkua` |
 
 ---
 
-## Deployment krok po kroku
+## Deployment
 
 ### 1. Utwórz nową Resource Group dla NSA
 
-```bash
-az group create --name rg-nsa-crawler --location westeurope
-```
+W Azure Portal lub CLI utwórz RG (np. `RG-ALTO-NSA-Crawler`).
 
-### 2. Deploy (przycisk lub CLI)
+### 2. Nadaj uprawnienia deweloperowi
+
+Po utworzeniu RG nadaj deweloperowi rolę **Contributor** (ten sam deweloper co ma dostęp do RG Eureki):
+
+1. Portal Azure → Resource Groups → `RG-ALTO-NSA-Crawler`
+2. **Access control (IAM)** → **Add** → **Add role assignment**
+3. Role: **Contributor**
+4. Members: wyszukaj deweloper po emailu/nazwie
+5. **Review + assign**
+
+> Dzięki temu deweloper może: push image do ACR, update jobów, podgląd logów, start/stop backfill.
+
+### 3. Deploy (przycisk lub CLI)
 
 **Opcja A: Przycisk "Deploy to Azure"** (góra README)
 
-**Opcja B: Azure CLI**
+<!-- **Opcja B: Azure CLI**
 ```bash
 az deployment group create \
   --resource-group rg-nsa-crawler \
@@ -212,4 +222,4 @@ NSA używa **tego samego SharePoint** co Eureka, ale zapisuje w **osobnym folder
 **Ostatnia aktualizacja:** 2025-01-29
 **Kompatybilne z:** NSA.Crawler v1.x
 **Wymaga:** Eureka.Crawler deployment (rg-eureka-crawler)
-**Utrzymywane przez:** bartoszpalmi@hotmail.com
+**Utrzymywane przez:** bartoszpalmi@hotmail.com -->

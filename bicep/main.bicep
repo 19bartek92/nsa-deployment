@@ -40,13 +40,25 @@ param imageName string = 'nsa-crawler'
 param imageTag string = 'latest'
 
 @description('CPU cores for job containers')
-param cpu string = '1.0'
+param cpu string = '2.0'
 
 @description('Memory for job containers')
-param memory string = '2Gi'
+param memory string = '4Gi'
 
 @description('CRON expression for delta job schedule (UTC timezone)')
 param cronExpression string = '10 5 * * *'
+
+@description('Enable proxy for NSA requests')
+param proxyEnabled bool = true
+
+@description('Proxy list URL from Webshare (fetched at startup)')
+param proxyListUrl string = ''
+
+@description('Enable parallel search for backfill mode')
+param parallelSearchEnabled bool = true
+
+@description('Maximum parallel search sessions')
+param maxParallelSearchSessions int = 10
 
 // ============================================================================
 // CROSS-RG RESOURCE REFERENCES
@@ -158,15 +170,25 @@ resource jobBackfill 'Microsoft.App/jobs@2023-05-01' = {
           }
           env: [
             { name: 'MODE', value: 'backfill' }
-            // NSA specific configuration
-            { name: 'Nsa__BackfillStartDate', value: '2024-01-01' }
-            { name: 'Nsa__BackfillEndDate', value: '2024-12-31' }
-            { name: 'Nsa__DeltaWindowDays', value: '14' }
+            // NSA scraping configuration
+            { name: 'Nsa__BaseUrl', value: 'https://orzeczenia.nsa.gov.pl/cbo/query' }
+            { name: 'Nsa__SearchWord', value: '*' }
             { name: 'Nsa__SixMonthRuleMonths', value: '6' }
+            { name: 'Nsa__DeltaWindowDays', value: '14' }
+            { name: 'Nsa__HttpTimeoutSeconds', value: '180' }
+            { name: 'Nsa__MaxConcurrentDocuments', value: '5' }
+            { name: 'Nsa__EnableParallelSearch', value: string(parallelSearchEnabled) }
+            { name: 'Nsa__MaxParallelSearchSessions', value: string(maxParallelSearchSessions) }
+            { name: 'Nsa__ParallelThresholdPages', value: '20' }
             { name: 'Nsa__Limits__RequestsPerMinute', value: '10' }
-            { name: 'Nsa__Limits__RequestsPerHour', value: '100' }
-            { name: 'Nsa__Limits__MinDelayMs', value: '2000' }
-            { name: 'Nsa__Limits__MaxDelayMs', value: '5000' }
+            { name: 'Nsa__Limits__RequestsPerHour', value: '200' }
+            { name: 'Nsa__Limits__DelayBetweenRequestsMs', value: '1000' }
+            // Proxy configuration
+            { name: 'Proxy__Enabled', value: string(proxyEnabled) }
+            { name: 'Proxy__ListUrl', value: proxyListUrl }
+            { name: 'Proxy__CooldownSeconds', value: '60' }
+            { name: 'Proxy__MaxConsecutiveErrors', value: '5' }
+            { name: 'Proxy__MaxRetryPerRequest', value: '8' }
             // Cosmos DB - NSA database
             { name: 'Cosmos__Database', value: 'nsa' }
             { name: 'Cosmos__DecisionsCollection', value: 'decisions' }
@@ -268,15 +290,23 @@ resource jobDelta 'Microsoft.App/jobs@2023-05-01' = {
           }
           env: [
             { name: 'MODE', value: 'delta' }
-            // NSA specific configuration
-            { name: 'Nsa__BackfillStartDate', value: '2024-01-01' }
-            { name: 'Nsa__BackfillEndDate', value: '2024-12-31' }
-            { name: 'Nsa__DeltaWindowDays', value: '14' }
+            // NSA scraping configuration
+            { name: 'Nsa__BaseUrl', value: 'https://orzeczenia.nsa.gov.pl/cbo/query' }
+            { name: 'Nsa__SearchWord', value: '*' }
             { name: 'Nsa__SixMonthRuleMonths', value: '6' }
+            { name: 'Nsa__DeltaWindowDays', value: '14' }
+            { name: 'Nsa__HttpTimeoutSeconds', value: '180' }
+            { name: 'Nsa__MaxConcurrentDocuments', value: '5' }
+            { name: 'Nsa__EnableParallelSearch', value: 'false' }
             { name: 'Nsa__Limits__RequestsPerMinute', value: '10' }
-            { name: 'Nsa__Limits__RequestsPerHour', value: '100' }
-            { name: 'Nsa__Limits__MinDelayMs', value: '2000' }
-            { name: 'Nsa__Limits__MaxDelayMs', value: '5000' }
+            { name: 'Nsa__Limits__RequestsPerHour', value: '200' }
+            { name: 'Nsa__Limits__DelayBetweenRequestsMs', value: '1000' }
+            // Proxy configuration
+            { name: 'Proxy__Enabled', value: string(proxyEnabled) }
+            { name: 'Proxy__ListUrl', value: proxyListUrl }
+            { name: 'Proxy__CooldownSeconds', value: '60' }
+            { name: 'Proxy__MaxConsecutiveErrors', value: '5' }
+            { name: 'Proxy__MaxRetryPerRequest', value: '8' }
             // Cosmos DB - NSA database
             { name: 'Cosmos__Database', value: 'nsa' }
             { name: 'Cosmos__DecisionsCollection', value: 'decisions' }

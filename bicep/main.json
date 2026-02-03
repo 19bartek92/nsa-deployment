@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.38.5.1644",
-      "templateHash": "7395234002470850184"
+      "templateHash": "9493721035749173195"
     }
   },
   "parameters": {
@@ -85,14 +85,14 @@
     },
     "cpu": {
       "type": "string",
-      "defaultValue": "1.0",
+      "defaultValue": "2.0",
       "metadata": {
         "description": "CPU cores for job containers"
       }
     },
     "memory": {
       "type": "string",
-      "defaultValue": "2Gi",
+      "defaultValue": "4Gi",
       "metadata": {
         "description": "Memory for job containers"
       }
@@ -102,6 +102,34 @@
       "defaultValue": "10 5 * * *",
       "metadata": {
         "description": "CRON expression for delta job schedule (UTC timezone)"
+      }
+    },
+    "proxyEnabled": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Enable proxy for NSA requests"
+      }
+    },
+    "proxyListUrl": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Proxy list URL from Webshare (fetched at startup)"
+      }
+    },
+    "parallelSearchEnabled": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Enable parallel search for backfill mode"
+      }
+    },
+    "maxParallelSearchSessions": {
+      "type": "int",
+      "defaultValue": 10,
+      "metadata": {
+        "description": "Maximum parallel search sessions"
       }
     }
   },
@@ -175,20 +203,40 @@
                   "value": "backfill"
                 },
                 {
-                  "name": "Nsa__BackfillStartDate",
-                  "value": "2024-01-01"
+                  "name": "Nsa__BaseUrl",
+                  "value": "https://orzeczenia.nsa.gov.pl/cbo/query"
                 },
                 {
-                  "name": "Nsa__BackfillEndDate",
-                  "value": "2024-12-31"
+                  "name": "Nsa__SearchWord",
+                  "value": "*"
+                },
+                {
+                  "name": "Nsa__SixMonthRuleMonths",
+                  "value": "6"
                 },
                 {
                   "name": "Nsa__DeltaWindowDays",
                   "value": "14"
                 },
                 {
-                  "name": "Nsa__SixMonthRuleMonths",
-                  "value": "6"
+                  "name": "Nsa__HttpTimeoutSeconds",
+                  "value": "180"
+                },
+                {
+                  "name": "Nsa__MaxConcurrentDocuments",
+                  "value": "5"
+                },
+                {
+                  "name": "Nsa__EnableParallelSearch",
+                  "value": "[string(parameters('parallelSearchEnabled'))]"
+                },
+                {
+                  "name": "Nsa__MaxParallelSearchSessions",
+                  "value": "[string(parameters('maxParallelSearchSessions'))]"
+                },
+                {
+                  "name": "Nsa__ParallelThresholdPages",
+                  "value": "20"
                 },
                 {
                   "name": "Nsa__Limits__RequestsPerMinute",
@@ -196,15 +244,31 @@
                 },
                 {
                   "name": "Nsa__Limits__RequestsPerHour",
-                  "value": "100"
+                  "value": "200"
                 },
                 {
-                  "name": "Nsa__Limits__MinDelayMs",
-                  "value": "2000"
+                  "name": "Nsa__Limits__DelayBetweenRequestsMs",
+                  "value": "1000"
                 },
                 {
-                  "name": "Nsa__Limits__MaxDelayMs",
-                  "value": "5000"
+                  "name": "Proxy__Enabled",
+                  "value": "[string(parameters('proxyEnabled'))]"
+                },
+                {
+                  "name": "Proxy__ListUrl",
+                  "value": "[parameters('proxyListUrl')]"
+                },
+                {
+                  "name": "Proxy__CooldownSeconds",
+                  "value": "60"
+                },
+                {
+                  "name": "Proxy__MaxConsecutiveErrors",
+                  "value": "5"
+                },
+                {
+                  "name": "Proxy__MaxRetryPerRequest",
+                  "value": "8"
                 },
                 {
                   "name": "Cosmos__Database",
@@ -373,20 +437,32 @@
                   "value": "delta"
                 },
                 {
-                  "name": "Nsa__BackfillStartDate",
-                  "value": "2024-01-01"
+                  "name": "Nsa__BaseUrl",
+                  "value": "https://orzeczenia.nsa.gov.pl/cbo/query"
                 },
                 {
-                  "name": "Nsa__BackfillEndDate",
-                  "value": "2024-12-31"
+                  "name": "Nsa__SearchWord",
+                  "value": "*"
+                },
+                {
+                  "name": "Nsa__SixMonthRuleMonths",
+                  "value": "6"
                 },
                 {
                   "name": "Nsa__DeltaWindowDays",
                   "value": "14"
                 },
                 {
-                  "name": "Nsa__SixMonthRuleMonths",
-                  "value": "6"
+                  "name": "Nsa__HttpTimeoutSeconds",
+                  "value": "180"
+                },
+                {
+                  "name": "Nsa__MaxConcurrentDocuments",
+                  "value": "5"
+                },
+                {
+                  "name": "Nsa__EnableParallelSearch",
+                  "value": "false"
                 },
                 {
                   "name": "Nsa__Limits__RequestsPerMinute",
@@ -394,15 +470,31 @@
                 },
                 {
                   "name": "Nsa__Limits__RequestsPerHour",
-                  "value": "100"
+                  "value": "200"
                 },
                 {
-                  "name": "Nsa__Limits__MinDelayMs",
-                  "value": "2000"
+                  "name": "Nsa__Limits__DelayBetweenRequestsMs",
+                  "value": "1000"
                 },
                 {
-                  "name": "Nsa__Limits__MaxDelayMs",
-                  "value": "5000"
+                  "name": "Proxy__Enabled",
+                  "value": "[string(parameters('proxyEnabled'))]"
+                },
+                {
+                  "name": "Proxy__ListUrl",
+                  "value": "[parameters('proxyListUrl')]"
+                },
+                {
+                  "name": "Proxy__CooldownSeconds",
+                  "value": "60"
+                },
+                {
+                  "name": "Proxy__MaxConsecutiveErrors",
+                  "value": "5"
+                },
+                {
+                  "name": "Proxy__MaxRetryPerRequest",
+                  "value": "8"
                 },
                 {
                   "name": "Cosmos__Database",

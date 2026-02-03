@@ -3,10 +3,10 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "location": {
-      "value": "westeurope"
+      "value": "polandcentral"
     },
     "sharedResourceGroupName": {
-      "value": "rg-eureka-crawler"
+      "value": "RG-ALTO-Eureka-Crawler"
     },
     "environmentName": {
       "value": "env-eureka-crawler"
@@ -18,7 +18,7 @@
       "value": "kv-eureka-XXXXX"
     },
     "acrName": {
-      "value": "acreurekaXXXXX"
+      "value": "acrXXXXX"
     },
     "cosmosAccountName": {
       "value": "cosmos-eureka-XXXXX"
@@ -36,13 +36,25 @@
       "value": "latest"
     },
     "cpu": {
-      "value": "1.0"
+      "value": "2.0"
     },
     "memory": {
-      "value": "2Gi"
+      "value": "4Gi"
     },
     "cronExpression": {
       "value": "10 5 * * *"
+    },
+    "proxyEnabled": {
+      "value": true
+    },
+    "proxyListUrl": {
+      "value": "YOUR-PROXY-LIST-URL"
+    },
+    "parallelSearchEnabled": {
+      "value": true
+    },
+    "maxParallelSearchSessions": {
+      "value": 10
     }
   }
 }
