@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.38.5.1644",
-      "templateHash": "9493721035749173195"
+      "templateHash": "12231714912737481201"
     }
   },
   "parameters": {
@@ -18,14 +18,14 @@
     },
     "sharedResourceGroupName": {
       "type": "string",
-      "defaultValue": "rg-eureka-crawler",
+      "defaultValue": "RG-ALTO-Eureka-Crawler",
       "metadata": {
         "description": "Name of the Resource Group containing shared infrastructure (Eureka deployment)"
       }
     },
     "environmentName": {
       "type": "string",
-      "defaultValue": "env-eureka-crawler",
+      "defaultValue": "env-eureka-crawler-proxy",
       "metadata": {
         "description": "Name of the existing Container Apps Environment (from Eureka deployment)"
       }
@@ -39,18 +39,21 @@
     },
     "keyVaultName": {
       "type": "string",
+      "defaultValue": "kv-eureka-wweroxz7udkua",
       "metadata": {
         "description": "Name of the existing Azure Key Vault (from Eureka deployment)"
       }
     },
     "acrName": {
       "type": "string",
+      "defaultValue": "acrwweroxz7udkua",
       "metadata": {
         "description": "Name of the existing Azure Container Registry (from Eureka deployment)"
       }
     },
     "cosmosAccountName": {
       "type": "string",
+      "defaultValue": "cosmos-eureka-wweroxz7udkua",
       "metadata": {
         "description": "Name of the existing Cosmos DB account (from Eureka deployment)"
       }

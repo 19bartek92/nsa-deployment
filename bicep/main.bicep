@@ -6,22 +6,22 @@ param location string = resourceGroup().location
 // ============================================================================
 
 @description('Name of the Resource Group containing shared infrastructure (Eureka deployment)')
-param sharedResourceGroupName string = 'rg-eureka-crawler'
+param sharedResourceGroupName string = 'RG-ALTO-Eureka-Crawler'
 
 @description('Name of the existing Container Apps Environment (from Eureka deployment)')
-param environmentName string = 'env-eureka-crawler'
+param environmentName string = 'env-eureka-crawler-proxy'
 
 @description('Name of the existing User-Assigned Managed Identity (from Eureka deployment)')
 param uamiName string = 'uami-eureka-crawler'
 
 @description('Name of the existing Azure Key Vault (from Eureka deployment)')
-param keyVaultName string
+param keyVaultName string = 'kv-eureka-wweroxz7udkua'
 
 @description('Name of the existing Azure Container Registry (from Eureka deployment)')
-param acrName string
+param acrName string = 'acrwweroxz7udkua'
 
 @description('Name of the existing Cosmos DB account (from Eureka deployment)')
-param cosmosAccountName string
+param cosmosAccountName string = 'cosmos-eureka-wweroxz7udkua'
 
 // ============================================================================
 // NSA-SPECIFIC PARAMETERS

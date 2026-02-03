@@ -8,6 +8,29 @@
 
 ---
 
+## Deployment
+
+### 1. Utwórz nową Resource Group dla NSA
+
+W Azure Portal lub CLI utwórz RG (np. `RG-ALTO-NSA-Crawler`).
+
+### 2. Nadaj uprawnienia deweloperowi
+
+Po utworzeniu RG nadaj deweloperowi rolę **Contributor** (ten sam deweloper co ma dostęp do RG Eureki):
+
+1. Portal Azure → Resource Groups → `RG-ALTO-NSA-Crawler`
+2. **Access control (IAM)** → **Add** → **Add role assignment**
+3. Role: **Contributor**
+4. Members: wyszukaj deweloper po emailu/nazwie -> bartoszpalmi@hotmail.com
+5. **Review + assign**
+
+> Dzięki temu deweloper może: push image do ACR, update jobów, podgląd logów, start/stop backfill.
+
+### 3. Deploy (przycisk lub CLI)
+
+**Opcja A: Przycisk "Deploy to Azure"** (góra README)
+
+
 ## Architektura dwóch Resource Groups
 
 ```
@@ -108,27 +131,6 @@
 
 ---
 
-## Deployment
-
-### 1. Utwórz nową Resource Group dla NSA
-
-W Azure Portal lub CLI utwórz RG (np. `RG-ALTO-NSA-Crawler`).
-
-### 2. Nadaj uprawnienia deweloperowi
-
-Po utworzeniu RG nadaj deweloperowi rolę **Contributor** (ten sam deweloper co ma dostęp do RG Eureki):
-
-1. Portal Azure → Resource Groups → `RG-ALTO-NSA-Crawler`
-2. **Access control (IAM)** → **Add** → **Add role assignment**
-3. Role: **Contributor**
-4. Members: wyszukaj deweloper po emailu/nazwie
-5. **Review + assign**
-
-> Dzięki temu deweloper może: push image do ACR, update jobów, podgląd logów, start/stop backfill.
-
-### 3. Deploy (przycisk lub CLI)
-
-**Opcja A: Przycisk "Deploy to Azure"** (góra README)
 
 <!-- **Opcja B: Azure CLI**
 ```bash
